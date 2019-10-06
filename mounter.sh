@@ -1,21 +1,19 @@
 #!/bin/bash
 
-# device=$(udiskie-info -2 -a -o "{ui_label} {mount_path}" | rofi -dmenu -theme android_notification)
+shopt -s lastpipe
 
-export rofistr=""
-rofistr=$(udiskie-info -2 -a -o "{ui_label} {mount_path}" | \
-	      while read dev name mnt
+rofistr=$(udiskie-info -2 -a -o "{device_file};{drive_label};{ui_id_uuid};{is_mounted};{mount_path}" | {
+	      while IFS=';' read dev drive part is_mnt mnt
 	      do
-		  echo -n "${dev} ${name}"
-		  [ ! -z "${mnt}" ] && echo -n " (mounted at ${mnt})" || echo -n " (not mounted)"
-		  echo
-	      done)
-device=$(echo $rofistr | rofi -dmenu -theme android_notification)
+		  [ "$is_mnt" = "True" ] &&
+		      mnt="mounted at $mnt" ||
+			  mnt="not mounted"
+		  echo "${dev} ${drive}${part} ($mnt)\n"
+	      done; })
+ans=$(echo -en $rofistr | rofi -dmenu -theme android_notification)
 
-[ -z "$device" ] || {
-    dev=$(echo $device | cut -d' ' -f1);
-    mnt=$(echo $device | cut -d' ' -f3);
-    dev=${dev%%:}
-    echo $dev aaa $mnt;
-    [ -z "$mnt" ] && udisksctl mount -b ${dev} || udisksctl unmount -b ${dev} ; \
-}
+mounted=$(echo $ans | cut -d'(' -f2)
+dev=$(echo $ans | cut -d' ' -f1)
+[ "$mounted" = "not mounted)" ] &&
+    udiskie-mount ${dev} ||
+	udiskie-umount ${dev}
