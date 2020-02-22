@@ -2,7 +2,7 @@
 
 shopt -s lastpipe
 
-rofistr=$(udiskie-info -2 -a -o "{device_file};{drive_label};{ui_id_uuid};{is_mounted};{mount_path}" | {
+rofistr=$(udiskie-info -a -o "{device_file};{drive_label};{ui_id_uuid};{is_mounted};{mount_path}" | {
 	      while IFS=';' read dev drive part is_mnt mnt
 	      do
 		  [ "$is_mnt" = "True" ] &&
